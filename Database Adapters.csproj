@@ -3,12 +3,22 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>Database_Adapters</RootNamespace>
+    <PackageId>Proliferation.DatabaseAdapters</PackageId>
+	<Version>1.0.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
+	<Title>Proliferation Database Adapters</Title>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Description>Various data adapters</Description>
+    <Copyright>Copyright owned by Eric Knight</Copyright>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<Authors>Data Dragon</Authors>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="FatumCore" Version="1.0.0" />
+    <PackageReference Include="SQLite" Version="3.13.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>
 
 </Project>

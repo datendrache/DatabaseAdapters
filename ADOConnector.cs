@@ -1,12 +1,9 @@
-﻿//   Phloz
+﻿//   Database Adapters
 //   Copyright (C) 2003-2019 Eric Knight
 
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using FatumCore;
-using System.Threading;
 
 namespace DatabaseAdapters
 {
