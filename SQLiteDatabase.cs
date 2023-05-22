@@ -1,18 +1,33 @@
-﻿//   Database Adapters
-//   Copyright (C) 2003-2019 Eric Knight
+﻿//   Database Adapters - Fatum Adapters for SQL Databases 
+//
+//   Copyright (C) 2003-2023 Eric Knight
+//   This software is distributed under the GNU Public v3 License
+//
+//   This program is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+
+//   This program is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+
+//   You should have received a copy of the GNU General Public License
+//   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System.Data;
-using FatumCore;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
+using Proliferation.Fatum;
 
 namespace DatabaseAdapters
 {
     public class SQLiteDatabase : IntDatabase
     {
         String dbConnection;
-        public SQLiteConnection dbCursor;
+        public SqliteConnection dbCursor;
         public string ConnectionString = "";
-        private SQLiteTransaction transaction = null;
+        private SqliteTransaction transaction = null;
         private Boolean transactionLock = false;
         int SoftwareType = 2;
         int SoftwareRevision = 0;
@@ -32,7 +47,7 @@ namespace DatabaseAdapters
             if (File.Exists(inputFile))
             {
                 dbConnection = String.Format("Data Source={0}", inputFile);
-                dbCursor = new SQLiteConnection(dbConnection);
+                dbCursor = new SqliteConnection(dbConnection);
                 
             }
             else
@@ -44,17 +59,14 @@ namespace DatabaseAdapters
                     Directory.CreateDirectory(fi.DirectoryName);
                 }
 
-                SQLiteConnection.CreateFile(inputFile);
                 dbConnection = String.Format("Data Source={0}", inputFile);
-                dbCursor = new SQLiteConnection(dbConnection);
+                dbCursor = new SqliteConnection(dbConnection);
             }
             dbCursor.Open();
             ExecuteNonQuery("PRAGMA synchronous = OFF;");
             ExecuteNonQuery("PRAGMA journal_mode = OFF;");
             ExecuteNonQuery("PRAGMA temp_store = MEMORY;");
             ExecuteNonQuery("PRAGMA page_size = 4096;");
-
-            //dbCursor.sqlite3_exec(db, , NULL, NULL, &sErrMsg);
         }
 
         public int getDatabaseType()
@@ -303,10 +315,10 @@ namespace DatabaseAdapters
 
             try
             {
-                SQLiteCommand mycommand = new SQLiteCommand(dbCursor);
+                SqliteCommand mycommand = dbCursor.CreateCommand();
                 mycommand.CommandText = sql;
                 mycommand.Prepare();
-                SQLiteDataReader reader = mycommand.ExecuteReader();
+                SqliteDataReader reader = mycommand.ExecuteReader();
                 dt.Load(reader);
                 reader.Close();
             }
@@ -327,7 +339,7 @@ namespace DatabaseAdapters
 
         public int ExecuteNonQuery(string sql)
         {
-            SQLiteCommand mycommand = new SQLiteCommand(dbCursor);
+            SqliteCommand mycommand = dbCursor.CreateCommand();
             mycommand.CommandText = sql;
             mycommand.Prepare();
             int rowsUpdated = mycommand.ExecuteNonQuery();
@@ -342,7 +354,7 @@ namespace DatabaseAdapters
 
         public object ExecuteScalar(string sql)
         {
-            SQLiteCommand mycommand = new SQLiteCommand(dbCursor);
+            SqliteCommand mycommand = dbCursor.CreateCommand();
             mycommand.CommandText = sql;
             mycommand.Prepare();
             object value = mycommand.ExecuteScalar();
@@ -351,13 +363,13 @@ namespace DatabaseAdapters
 
         public object ExecuteScalarTree(string sql, Tree data)
         {
-            SQLiteCommand mycommand = new SQLiteCommand(dbCursor);
+            SqliteCommand mycommand = dbCursor.CreateCommand();
             mycommand.CommandText = sql;
             int indyntreeCount = data.tree.Count;
             for (int index = 0; index < indyntreeCount; index++)
             {
                 string key = (string)data.leafnames[index];
-                string value = data.getElement(key);
+                string value = data.GetElement(key);
                 mycommand.Parameters.AddWithValue(key, value);
             }
 
@@ -387,13 +399,13 @@ namespace DatabaseAdapters
             for (int i = 0; i < datatreeCount; i++)
             {
                 string key = (string)data.leafnames[i];
-                string value = data.getElement(key);
+                string value = data.GetElement(key);
 
                 if (key.Substring(0, 1) != "_")
                 {
                     if (key.Substring(0, 1) != "*")
                     {
-                        Tree casting = data.findNode("_" + key);
+                        Tree casting = data.FindNode("_" + key);
 
                         if (casting != null)  // This key is typecast
                         {
@@ -404,28 +416,28 @@ namespace DatabaseAdapters
                                 case "integer":
                                 case "smallint":
                                     values += String.Format(" [{0}]=CAST({1} as INTEGER),", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                                 case "float":
                                 case "real":
                                     values += String.Format(" [{0}]=CAST({1} as REAL),", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                                 default:
                                     values += String.Format(" [{0}]={1},", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                             }
                         }
                         else
                         {
                             values += String.Format(" [{0}]={1},", key, "@value" + i.ToString());
-                            parms.addElement("@value" + i.ToString(), value);
+                            parms.AddElement("@value" + i.ToString(), value);
                         }
                     }   
                     else
                     {
-                        parms.addElement(key.Substring(1), value);
+                        parms.AddElement(key.Substring(1), value);
                     }
                 }
             }
@@ -444,11 +456,9 @@ namespace DatabaseAdapters
             }
             catch (Exception)
             {
-                //MessageBox.Show(fail.Message);
-
                 returnCode = false;
             }
-            parms.dispose();
+            parms.Dispose();
             return returnCode;
         }
 
@@ -468,31 +478,6 @@ namespace DatabaseAdapters
         }
 
         /// <summary>
-        ///     Allows the programmer to easily delete rows from the DB.
-        /// </summary>
-        /// <param name="tableName">The table from which to delete.</param>
-        /// <param name="where">The where clause for the delete.</param>
-        /// <returns>A boolean true or false to signify success or failure.</returns>
-
-        //public bool Delete(String tableName, String where)
-        //{
-        //    Boolean returnCode = true;
-
-        //    try
-        //    {
-        //        this.ExecuteNonQuery(String.Format("delete from {0} where {1};", tableName, where));
-        //    }
-
-        //    catch (Exception fail)
-        //    {
-        //        returnCode = false;
-        //    }
-
-        //    return returnCode;
-        //}
-
-
-        /// <summary>
         ///     Allows the programmer to easily insert into the DB
         /// </summary>
         /// <param name="tableName">The table into which we insert the data.</param>
@@ -510,13 +495,13 @@ namespace DatabaseAdapters
             for (int i = 0; i < datatreeCount; i++)
             {
                 string key = (string)data.leafnames[i];
-                string value = data.getElement(key);
+                string value = data.GetElement(key);
 
                 if (key.Substring(0, 1) != "_")
                 {
                     if (key.Substring(0, 1) != "*")
                     {
-                        Tree casting = data.findNode("_" + key);
+                        Tree casting = data.FindNode("_" + key);
 
                         if (casting != null)  // This key is typecast
                         {
@@ -537,18 +522,18 @@ namespace DatabaseAdapters
                                     values += " @value" + i.ToString() + ",";
                                     break;
                             }
-                            parms.addElement("@value" + i.ToString(), value);
+                            parms.AddElement("@value" + i.ToString(), value);
                         }
                         else
                         {
                             columns += String.Format(" [{0}],", key);
                             values += " @value" + i.ToString() + ",";
-                            parms.addElement("@value" + i.ToString(), value);
+                            parms.AddElement("@value" + i.ToString(), value);
                         }
                     }
                     else
                     {
-                        parms.addElement(key.Substring(1), value);
+                        parms.AddElement(key.Substring(1), value);
                     }
                 }
             }
@@ -564,34 +549,9 @@ namespace DatabaseAdapters
             {
                 returnCode = false;
             }
-            parms.dispose();
+            parms.Dispose();
             return returnCode;
         }
-
-        /// <summary>
-        ///     Allows the programmer to easily delete all data from the DB.
-        /// </summary>
-        /// <returns>A boolean true or false to signify success or failure.</returns>
-
-        //public bool ClearDB()
-        //{
-        //    DataTable tables;
-
-        //    try
-        //    {
-        //        tables = this.Execute("select NAME from SQLITE_MASTER where type='table' order by NAME;");
-        //        foreach (DataRow table in tables.Rows)
-        //        {
-        //            this.ClearTable(table["NAME"].ToString());
-        //        }
-
-        //        return true;
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
 
         /// <summary>
         ///     Allows the user to easily clear all data from a specific table.
@@ -702,18 +662,18 @@ namespace DatabaseAdapters
 
             try
             {
-                SQLiteCommand mycommand = new SQLiteCommand();
+                SqliteCommand mycommand = new SqliteCommand();
                 int indyntreeCount = indyn.tree.Count;
                 for (int index = 0; index < indyntreeCount; index++)
                 {
                     string key = (string)indyn.leafnames[index];
-                    string value = indyn.getElement(key);
+                    string value = indyn.GetElement(key);
                     mycommand.Parameters.AddWithValue(key, value);
                 }
                 mycommand.Connection = dbCursor;
                 mycommand.CommandText = sql;
                 mycommand.Prepare();
-                SQLiteDataReader reader = mycommand.ExecuteReader();
+                SqliteDataReader reader = mycommand.ExecuteReader();
                 dt.Load(reader);
                 reader.Close();
             }
@@ -769,14 +729,14 @@ namespace DatabaseAdapters
 
             try
             {
-                SQLiteCommand mycommand = new SQLiteCommand();
+                SqliteCommand mycommand = new SqliteCommand();
 
-                mycommand.Parameters.Add("@Received", DbType.Int64).Value = long.Parse(data[0]);
-                mycommand.Parameters.Add("@Label", DbType.String).Value = data[1];
-                mycommand.Parameters.Add("@Category", DbType.String).Value = data[2];
-                mycommand.Parameters.Add("@Metadata", DbType.String).Value = data[3];
-                mycommand.Parameters.Add("@ID", DbType.Int64).Value = data[4];
-                mycommand.Parameters.Add("@Document", DbType.String).Value = data[5];
+                mycommand.Parameters.Add("@Received", Microsoft.Data.Sqlite.SqliteType.Integer).Value = long.Parse(data[0]);
+                mycommand.Parameters.Add("@Label", Microsoft.Data.Sqlite.SqliteType.Text).Value = data[1];
+                mycommand.Parameters.Add("@Category", Microsoft.Data.Sqlite.SqliteType.Text).Value = data[2];
+                mycommand.Parameters.Add("@Metadata", Microsoft.Data.Sqlite.SqliteType.Text).Value = data[3];
+                mycommand.Parameters.Add("@ID", Microsoft.Data.Sqlite.SqliteType.Integer).Value = data[4];
+                mycommand.Parameters.Add("@Document", Microsoft.Data.Sqlite.SqliteType.Text).Value = data[5];
 
                 mycommand.Connection = dbCursor;
                 mycommand.CommandText = prebuiltMessageString;
@@ -796,12 +756,12 @@ namespace DatabaseAdapters
 
             try
             {
-                SQLiteCommand mycommand = new SQLiteCommand();
+                SqliteCommand mycommand = new SqliteCommand();
                 int indyntreeCount = indyn.tree.Count;
                 for (int index = 0; index < indyntreeCount; index++)
                 {
                     string key = (string)indyn.leafnames[index];
-                    string value = indyn.getElement(key);
+                    string value = indyn.GetElement(key);
                     mycommand.Parameters.AddWithValue(key, value);
                 }
 
@@ -810,7 +770,7 @@ namespace DatabaseAdapters
                 mycommand.Connection = dbCursor;
                 mycommand.CommandText = sql;
                 mycommand.Prepare();
-                SQLiteDataReader reader = mycommand.ExecuteReader();
+                SqliteDataReader reader = mycommand.ExecuteReader();
                 dt.Load(reader);
                 reader.Close();
             }

@@ -1,9 +1,24 @@
-﻿//   Database Adapters
-//   Copyright (C) 2003-2019 Eric Knight
+﻿//   Database Adapters - Fatum Adapters for SQL Databases 
+//
+//   Copyright (C) 2003-2023 Eric Knight
+//   This software is distributed under the GNU Public v3 License
+//
+//   This program is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+
+//   This program is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+
+//   You should have received a copy of the GNU General Public License
+//   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 using System.Data;
 using System.Data.SqlClient;
-using FatumCore;
+using Proliferation.Fatum;
 
 namespace DatabaseAdapters
 {
@@ -362,7 +377,7 @@ namespace DatabaseAdapters
             for (int index = 0; index < indyntreeCount; index++)
             {
                 string key = (string)data.leafnames[index];
-                string value = data.getElement(key);
+                string value = data.GetElement(key);
                 mycommand.Parameters.Add(new SqlParameter(key, value));
             }
 
@@ -396,13 +411,13 @@ namespace DatabaseAdapters
             for (int i = 0; i < datatreeCount; i++)
             {
                 string key = (string)data.leafnames[i];
-                string value = data.getElement(key);
+                string value = data.GetElement(key);
 
                 if (key.Substring(0, 1) != "_")
                 {
                     if (key.Substring(0, 1) != "*")
                     {
-                        Tree casting = data.findNode("_" + key);
+                        Tree casting = data.FindNode("_" + key);
 
                         if (casting != null)  // This key is typecast
                         {
@@ -411,35 +426,35 @@ namespace DatabaseAdapters
                             {
                                 case "bigint":
                                     values += String.Format(" [{0}]=CONVERT(bigint,{1}),", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                                 case "smallint":
                                     values += String.Format(" [{0}]=CONVERT(smallint,{1}),", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                                 case "real":
                                     values += String.Format(" [{0}]=CONVERT(real,{1}),", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                                 case "float":
                                     values += String.Format(" [{0}]=CONVERT(float,{1}),", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                                 default:
                                     values += String.Format(" [{0}]={1},", key, "@value" + i.ToString());
-                                    parms.addElement("@value" + i.ToString(), value);
+                                    parms.AddElement("@value" + i.ToString(), value);
                                     break;
                             }
                         }
                         else
                         {
                             values += String.Format(" [{0}]={1},", key, "@value" + i.ToString());
-                            parms.addElement("@value" + i.ToString(), value);
+                            parms.AddElement("@value" + i.ToString(), value);
                         }
                     }
                     else
                     {
-                        parms.addElement(key.Substring(1), value);
+                        parms.AddElement(key.Substring(1), value);
                     }
                   
                 }    
@@ -459,38 +474,13 @@ namespace DatabaseAdapters
             }
             catch (Exception xyz)
             {
-                //MessageBox.Show(fail.Message);
                 System.Console.Out.WriteLine(xyz.Message);
                 System.Console.Out.WriteLine(xyz.StackTrace);
                 returnCode = false;
             }
-            parms.dispose();
+            parms.Dispose();
             return returnCode;
         }
-
-        /// <summary>
-        ///     Allows the programmer to easily delete rows from the DB.
-        /// </summary>
-        /// <param name="tableName">The table from which to delete.</param>
-        /// <param name="where">The where clause for the delete.</param>
-        /// <returns>A boolean true or false to signify success or failure.</returns>
-
-        //public bool Delete(String tableName, String where)
-        //{
-        //    Boolean returnCode = true;
-
-        //    try
-        //    {
-        //        this.ExecuteNonQuery(String.Format("delete from {0} where {1};", tableName, where));
-        //    }
-
-        //    catch (Exception fail)
-        //    {
-        //        returnCode = false;
-        //    }
-
-        //    return returnCode;
-        //}
 
         public bool DeleteTree(String tableName, Tree data, String where)
         {
@@ -525,13 +515,13 @@ namespace DatabaseAdapters
             for (int i = 0; i < datatreeCount; i++)
             {
                 string key = (string) data.leafnames[i];
-                string value = data.getElement(key);
+                string value = data.GetElement(key);
 
                 if (key.Substring(0, 1) != "_")
                 {
                     if (key.Substring(0, 1) != "*")
                     {
-                        Tree casting = data.findNode("_" + key);
+                        Tree casting = data.FindNode("_" + key);
 
                         if (casting != null)  // This key is typecast
                         {
@@ -559,18 +549,18 @@ namespace DatabaseAdapters
                                     values += " @value" + i.ToString() + ",";
                                     break;
                             }
-                            parms.addElement("@value" + i.ToString(), value);
+                            parms.AddElement("@value" + i.ToString(), value);
                         }
                         else
                         {
                             columns += String.Format(" [{0}],", key);
                             values += " @value" + i.ToString() + ",";
-                            parms.addElement("@value" + i.ToString(), value);
+                            parms.AddElement("@value" + i.ToString(), value);
                         }
                     }
                     else
                     {
-                        parms.addElement(key.Substring(1), value);
+                        parms.AddElement(key.Substring(1), value);
                     }
                 }
             }
@@ -588,34 +578,9 @@ namespace DatabaseAdapters
                 System.Console.Out.WriteLine(xyz.StackTrace);
                 returnCode = false;
             }
-            parms.dispose();
+            parms.Dispose();
             return returnCode;
         }
-
-        /// <summary>
-        ///     Allows the programmer to easily delete all data from the DB.
-        /// </summary>
-        /// <returns>A boolean true or false to signify success or failure.</returns>
-
-        //public bool ClearDB()
-        //{
-        //    DataTable tables;
-
-        //    try
-        //    {
-        //        tables = this.Execute("select NAME from SQLITE_MASTER where type='table' order by NAME;");
-        //        foreach (DataRow table in tables.Rows)
-        //        {
-        //            this.ClearTable(table["NAME"].ToString());
-        //        }
-
-        //        return true;
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
 
         /// <summary>
         ///     Allows the user to easily clear all data from a specific table.
@@ -719,7 +684,7 @@ namespace DatabaseAdapters
                 for (int index = 0; index < indyntreeCount; index++)
                 {
                     string key = (string)indyn.leafnames[index];
-                    string value = indyn.getElement(key);
+                    string value = indyn.GetElement(key);
                     mycommand.Parameters.Add(new SqlParameter(key, value));
                 }
                 mycommand.Connection = dbCursor;
@@ -831,7 +796,7 @@ namespace DatabaseAdapters
                 for (int index = 0; index < indyntreeCount; index++)
                 {
                     string key = (string)indyn.leafnames[index];
-                    string value = indyn.getElement(key);
+                    string value = indyn.GetElement(key);
                     mycommand.Parameters.Add(new SqlParameter(key, value));
                 }
 
